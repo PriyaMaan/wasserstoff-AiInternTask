@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>What Beats It?</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #8EC5FC, #E0C3FC);
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-container {
+      margin-top: 1rem;
+    }
+    input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 200px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin-left: 10px;
+      cursor: pointer;
+      background-color: #7e57c2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #673ab7;
+    }
+    #result {
+      font-size: 1.3rem;
+      margin-top: 2rem;
+    }
+    #score {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #333;
+    }
+    #history {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 1rem;
+    }
+    #history li {
+      padding: 5px;
+      font-size: 1rem;
+      color: #555;
+    }
+    .game-over {
+      color: crimson;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+    .seed-word {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 What Beats It?</h1>
+  <div id="seedDisplay" class="seed-word">Seed word: Loading...</div>
+
+  <div class="input-container">
+    <input id="guessInput" placeholder="Your guess..." />
+    <button onclick="submitGuess()">Submit Guess</button>
+  </div>
+
+  <div id="result"></div>
+  <div id="score">Score: 0</div>
+  <ul id="history"></ul>
+
+  <script>
+    let score = 0;
+    let guesses = [];
+    let gameOver = false;
+    const seedOptions = ["Rock", "Paper", "Scissors"];
+    const seed_word = seedOptions[Math.floor(Math.random() * seedOptions.length)];
+
+    // Show seed word on screen
+    document.getElementById("seedDisplay").innerText = `Seed word: ${seed_word}`;
+
+    async function submitGuess() {
+      if (gameOver) return;
+
+      const user_guess = document.getElementById("guessInput").value.trim();
+      const session_id = "frontend-session";
+
+      if (!user_guess) {
+        document.getElementById("result").innerText = "❗ Please enter a guess.";
+        return;
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/guess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed_word, user_guess, session_id })
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        document.getElementById("result").innerText = data.result;
+      }
+
+      if (data.status === "success" && !data.game_over) {
+        guesses.push(user_guess);
+        score++;
+        updateScore();
+        updateHistory();
+        document.getElementById("result").innerText += " 🎉";
+      } else if (data.game_over) {
+        gameOver = true;
+        document.getElementById("score").innerHTML = `<div class="game-over">Game Over! Final Score: ${score}</div>`;
+      }
+
+      document.getElementById("guessInput").value = "";
+    }
+
+    function updateScore() {
+      document.getElementById("score").innerText = `Score: ${score}`;
+    }
+
+    function updateHistory() {
+      const list = document.getElementById("history");
+      list.innerHTML = "";
+      guesses.slice().reverse().forEach(guess => {
+        const li = document.createElement("li");
+        li.textContent = `✅ ${guess}`;
+        list.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
