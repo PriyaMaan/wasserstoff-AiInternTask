@@ -1,0 +1,7 @@
+fastapi  
+uvicorn  
+redis  
+asyncpg  # or psycopg2 for PostgreSQL  
+httpx    # For making HTTP requests  
+pydantic # For data validation  
+pytest
